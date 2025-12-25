@@ -1,3 +1,4 @@
 data/
 .venv/
 raw_discord/
+__pycache__/
