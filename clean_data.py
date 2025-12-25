@@ -2,23 +2,28 @@ import json
 import os
 import re
 import emoji
+from pathlib import Path
 
-#discord
-directory_path = "./raw/Messages/"
-output_file = "./data/clean_discord.txt"
-vocab_file = "./data/vocab.txt"
-data_file = "./data/logs.txt"
-misc_file = "./data/misc.txt"
+BASE_DIR = Path(".")
+DIRECTORY_PATH = BASE_DIR / "raw_discord" / "Messages"
+DATA_DIR = BASE_DIR / "data"
 
-bad_words = set(["fuck", "shit", "bitch"])
+DATA_FILE = DATA_DIR / "clean_discord.txt"
+VOCAB_FILE = DATA_DIR / "vocab_new.txt"
+LOGS_FILE = DATA_DIR / "logs.txt"
+MISC_FILE = DATA_DIR / "misc.txt"
+
+# bad_words = set(["fuck", "shit", "bitch"])
 
 unique_strings = set()
 
 def parse_discord(input_dir):
-    file_path = os.path.join(input_dir, "messages.json")
-    with open(file_path, "r") as file:
+    file_path = input_dir / "messages.json"
+
+    with open(file_path, "r", encoding = "utf-8") as file:
         data = json.load(file)
-        with open(output_file, "a") as out:
+
+        with open(DATA_FILE, "a", encoding = "utf-8") as out:
             for element in data: #of form {"ID": int, "Timestamp": datetime, "Contents": str, "Attachments": str}
                 #messages_json_data.append({"message": element["Contents"], "Timestamp": element["Timestamp"]})
                 text = clean_message(element["Contents"])
@@ -51,23 +56,22 @@ def clean_message(raw_text: str):
     
 def count_words():
     word_counts = {}
-    with open(output_file, "r") as file:
+    with open(DATA_FILE, "r", encoding = "utf-8") as file:
         for line in file:
-            #tokens = line.split()
             for token in line: #tokens:
                 if token in word_counts:
                     word_counts[token] += 1
                 else:
                     word_counts[token] = 1
     
-    with open(vocab_file, "a") as file:
+    with open(VOCAB_FILE, "a", encoding = "utf-8") as file:
         sorted_words = sorted(word_counts.keys(), key=(lambda key: word_counts[key]), reverse=True)
         for word in sorted_words:
             file.write(f"{word}: {word_counts[word]}\n")
         
 def create_server_index():
-    index_path = "./raw/raw_discord/Messages/index.json"
-    with open(index_path, "r") as file:
+    index_path = "./raw_discord/Messages/index.json"
+    with open(index_path, "r", encoding = "utf-8") as file:
         server_names = json.load(file)
 
     return server_names
@@ -76,48 +80,44 @@ def create_logs():
     server_names = create_server_index()
 
     def server_name(file_path):
-                with open(file_path, "r") as file:
-                    data = json.load(file)
-                    return server_names[data["id"]]
+        with open(file_path, "r", encoding = "utf-8") as file:
+            data = json.load(file)
+            return server_names[data["id"]]
 
-    for entry_name in os.listdir(directory_path):
-        full_path = os.path.join(directory_path, entry_name)
+    for entry_name in os.listdir(DIRECTORY_PATH):
+        #full_path = os.path.join(DIRECTORY_PATH, entry_name)
+        full_path = DIRECTORY_PATH / entry_name
         
         if os.path.isdir(full_path):
 
-            message_file = os.path.join(full_path, "messages.json")
-            server_info_file = os.path.join(full_path, "channel.json")
+            message_file = full_path / "messages.json"
+            server_info_file = full_path / "channel.json"
 
-            with open(message_file, "r") as file:
+            with open(message_file, "r", encoding = "utf-8") as file:
                 data = json.load(file)
                 server = server_name(server_info_file)
-                with open(data_file, "a") as out:
+                with open(LOGS_FILE, "a", encoding = "utf-8") as out:
                     for element in data: #of form {"ID": int, "Timestamp": datetime, "Contents": str, "Attachments": str}
                         #messages_json_data.append({"message": element["Contents"], "Timestamp": element["Timestamp"]})
                         out.write(f"@{element["Timestamp"]} in {server} \"{element["Contents"]}\"\n")
 
 
 if __name__ == "__main__":
-    i = 1
-    num_files = 100000000000
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)
 
-    if os.path.exists(output_file):
-        os.remove(output_file)
+    if os.path.exists(VOCAB_FILE):
+        os.remove(VOCAB_FILE)
 
-    if os.path.exists(vocab_file):
-        os.remove(vocab_file)
-
-    if os.path.exists(misc_file):
-        os.remove(misc_file)
+    if os.path.exists(MISC_FILE):
+        os.remove(MISC_FILE)
 
     server_names = create_server_index()
 
-    for entry_name in os.listdir(directory_path):
-        if (i > num_files):
-            break
-        i += 1
+    for entry_name in os.listdir(DIRECTORY_PATH):
 
-        full_path = os.path.join(directory_path, entry_name)
+        full_path = DIRECTORY_PATH / entry_name
+
         if os.path.isdir(full_path):
             parse_discord(full_path)
 

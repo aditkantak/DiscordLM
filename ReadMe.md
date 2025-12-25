@@ -7,3 +7,6 @@ Steps of the process
 3. train/eval
 
 Data hidden for obvious privacy reasons. Will keep process documented.
+
+Things to try later:
+- data without line breaks
