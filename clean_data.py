@@ -9,7 +9,7 @@ DIRECTORY_PATH = BASE_DIR / "raw_discord" / "Messages"
 DATA_DIR = BASE_DIR / "data"
 
 DATA_FILE = DATA_DIR / "clean_discord.txt"
-VOCAB_FILE = DATA_DIR / "vocab_new.txt"
+VOCAB_FILE = DATA_DIR / "vocab.txt"
 LOGS_FILE = DATA_DIR / "logs.txt"
 MISC_FILE = DATA_DIR / "misc.txt"
 

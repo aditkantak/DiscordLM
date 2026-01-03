@@ -8,6 +8,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "emoji" },
+    { name = "numpy" },
     { name = "torch" },
     { name = "torchvision" },
 ]
@@ -15,6 +16,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "emoji", specifier = ">=2.15.0" },
+    { name = "numpy", specifier = ">=2.4.0" },
     { name = "torch", specifier = ">=2.9.1" },
     { name = "torchvision", specifier = ">=0.24.1" },
 ]
