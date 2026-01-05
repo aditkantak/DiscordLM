@@ -40,7 +40,7 @@ def clean_message(raw_text: str):
     code_regex = r'```[\s\S]*```' #to remove code snippets
     multiline_regex = r'.*\n.*' #to remove multiline messages (usually unrelated)
     onlyemoji_regex = r'^(\\u[0-9a-fA-F]{4})+$'#to remove lines of only emojis
-    customemote_regex = r'<a?:\w+:\d+>' #message reference is <#xxxxx>
+    customemote_regex = r'<a?:\w+:\d+>' #to remove custom emojis
     if (re.search(url_regex, raw_text) is not None)\
         or (re.search(mention_regex, raw_text) is not None)\
         or (re.search(code_regex, raw_text) is not None)\
