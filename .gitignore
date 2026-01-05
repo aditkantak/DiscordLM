@@ -1,4 +1,5 @@
-data/
+data/*.txt
+data/*.npy
 .venv/
 raw_discord/
 __pycache__/
