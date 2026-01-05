@@ -21,24 +21,6 @@ class TokenDataset (Dataset):
         target = self._data[index + 1: index + self._sequence_length + 1]
         return example, target
 
-# class DataLoader:
-#     def __init__(self, data: npt.NDArray, ttsplit: float):
-#         self._data = torch.as_tensor(data, dtype=torch.uint16)
-
-#         self._dataset_length, = self._data.shape
-
-#         self._train_data = self._data[:int(self._dataset_length*ttsplit)]
-#         self._val_data = self._data[int(self._dataset_length*ttsplit):]
-
-#     def get_batch(self, batch_size: int, sequence_length: int, batch_type: str):
-#         data = self._train_data if batch_type == "train" else self._val_data
-        
-#         offsets = torch.randint(0, data.shape[0] - sequence_length, (batch_size,))
-        
-#         X = torch.stack([data[i: i + sequence_length] for i in offsets])
-#         y = torch.stack([data[i + 1: i + sequence_length + 1] for i in offsets])
-#         return X, y
-
 if __name__ == "__main__":
     #tokenize and prepare data
     tk = Tokenizer(VOCAB_FILE, 64)
@@ -53,14 +35,14 @@ if __name__ == "__main__":
     
     train_loader = DataLoader(train_data, 8, True)
 
-    # print(f"shape of training data: {train_data.shape}")
-    # print(f"length of test data")
+    # # print(f"shape of training data: {train_data.shape}")
+    # # print(f"length of test data")
 
-    for batch_ind, (X, y) in enumerate(train_loader):
-        print("--------------------------------")
-        print(f"batch #{batch_ind} with X of shape {X.shape} and y of shape {y.shape}")
-        print("--------------------------------")
-        print("".join([tk.decode(i.item()) for i in X[0]]))
-        print("--------------------------------")
-        if batch_ind > 1:
-            break
+    # for batch_ind, (X, y) in enumerate(train_loader):
+    #     print("--------------------------------")
+    #     print(f"batch #{batch_ind} with X of shape {X.shape} and y of shape {y.shape}")
+    #     print("--------------------------------")
+    #     print("".join([tk.decode(i.item()) for i in X[0]]))
+    #     print("--------------------------------")
+    #     if batch_ind > 1:
+    #         break
