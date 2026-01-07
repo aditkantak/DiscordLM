@@ -58,7 +58,7 @@ class Tokenizer:
         """
         return self.decode_dict[token]
 
-    def read_vocab(self, vocab_size: int, vocab_file: Path) -> list[int]:
+    def read_vocab(self, vocab_size: int, vocab_file: Path) -> list[str]:
         """
         Extracts the `vocab_size` most common tokens from the data. If vocab_size is greater than the number of unique tokens in the file, returns all unique tokens.
         
@@ -137,10 +137,5 @@ class Tokenizer:
 
 
 if __name__ == "__main__":
-    try:
-        tokens = np.load(TOKENS_FILE)
-        print(f"tokens of shape {tokens.shape}")
-    except:
-        Tokenizer().tokenize(DATA_FILE, 64, True)
-
+    pass
 
