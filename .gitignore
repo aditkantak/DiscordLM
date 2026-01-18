@@ -4,3 +4,4 @@ data/*.npy
 raw_discord/
 __pycache__/
 *.ipynb
+.python_version
