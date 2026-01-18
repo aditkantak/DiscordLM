@@ -3,3 +3,4 @@ data/*.npy
 .venv/
 raw_discord/
 __pycache__/
+*.ipynb

@@ -4,8 +4,8 @@ training a little transformer language model on discord chat logs. Transformer i
 Steps of the process
 1. clean up data
 2. design data pipeline
-3. design model <----- here currently
-4. train/eval
+3. design model
+4. train/eval <----- here currently
 
 Data hidden for obvious privacy reasons. Will keep process documented.
 
