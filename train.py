@@ -15,9 +15,8 @@ BATCH_SIZE = 4
 TRAIN_TEST_SPLIT = 0.9
 LR = 1e-4
 MOMENTUM = 0.9
-
-def train_epoch(loader: DataLoader):
-    pass
+EPOCHS = 1
+    
 
 if __name__ == "__main__":
     tk = Tokenizer(VOCAB_FILE, VOCAB_SIZE)
@@ -31,7 +30,7 @@ if __name__ == "__main__":
     train_data, val_data = random_split(dataset, ttsplit)
     print("Split dataset")
 
-    loader = DataLoader(train_data, BATCH_SIZE, shuffle=True)
+    train_loader = DataLoader(train_data, BATCH_SIZE, shuffle=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Training process will run on {device}")
@@ -48,4 +47,33 @@ if __name__ == "__main__":
     print(f"Model loaded to {device}")
 
     optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=MOMENTUM)
+    print("Beginning training loop")
 
+    for epoch in range(EPOCHS):
+        epoch_running_loss = 0
+        lastn_running_loss = 0
+        n = 100
+        best_loss = float("inf")
+
+        for batch_num, batch in enumerate(train_loader):
+            samples, targets = batch
+            optimizer.zero_grad()
+
+            predictions, loss = model(samples, targets)
+
+            loss.backward()
+            optimizer.step()
+
+            epoch_running_loss += loss.item()
+            lastn_running_loss += loss.item()
+            if loss.item() < best_loss: best_loss = loss.item()
+
+            if (batch_num % n == 0):
+                print(f"Batch {batch_num}: Last {n} avg loss: {(lastn_running_loss / n) :.5} overall avg loss: {(epoch_running_loss / (batch_num + 1)):.5}")
+                lastn_running_loss = 0
+
+        print("-------------------------------------------------------------------------------------------------\n")
+        print(f"Epoch {epoch + 1} Complete: Avg loss: {epoch_running_loss/len(train_data):.5} Best loss: {best_loss:.5}") 
+        print("\n-------------------------------------------------------------------------------------------------")
+
+            

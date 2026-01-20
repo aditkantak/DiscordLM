@@ -8,7 +8,7 @@ class TokenDataset (Dataset):
     def __init__(self, data: npt.NDArray, sequence_length: int):
         super().__init__()
         
-        self._data = torch.as_tensor(data, dtype=torch.uint16)
+        self._data = torch.as_tensor(data, dtype=torch.int64)
         self._sequence_length = sequence_length
 
         self.shape = self._data.shape #for testing
