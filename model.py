@@ -4,18 +4,10 @@ from tokenizer import Tokenizer, DATA_FILE
 import math
 from dataclasses import dataclass
 
-VOCAB_SIZE = 64
-BATCH_SIZE = 4
-D_MODEL = 32
-CONTEXT_LENGTH = 8
-NUM_HEADS = 4
-D_KEY = 8
-NUM_BLOCKS = 4
-
 @dataclass
 class Config:
     vocab_size: int
-    batch_size: int
+    #batch_size: int
     d_model: int
     context_length: int
     num_heads: int
@@ -147,8 +139,7 @@ class GPT(nn.Module):
             yield next_token
 
 if __name__ == "__main__":
-    config = Config(VOCAB_SIZE, BATCH_SIZE, D_MODEL, CONTEXT_LENGTH, NUM_HEADS, D_KEY, NUM_BLOCKS)
-
+    pass
 
 
 """
