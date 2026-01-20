@@ -1,4 +1,4 @@
-import os
+import sys
 from pathlib import Path
 import numpy as np
 import numpy.typing as npt
@@ -13,6 +13,16 @@ LOGS_FILE = DATA_DIR / "logs.txt"
 MISC_FILE = DATA_DIR / "misc.txt"
 TOKENS_TXT_FILE = DATA_DIR / "tokens.txt"
 TOKENS_FILE = DATA_DIR / "tokens.npy"
+
+class IncompletePipelineError (Exception):
+    def __init__(self, message: str = ""):
+        self.message = message
+        super().__init__(message)
+
+    def __str__(self):
+        if not self.message: return f"Data pipeline incomplete. Please run clean_data.py"
+        else: return f"Data pipeline incomplete. {self.message} file cannot be found/processed. Please run clean_data.py using \"uv run clean_data.py\""
+
 
 class Tokenizer:
     def __init__(self, vocab_file: Path, token_dim: int, dump_to_txt = False):
@@ -29,12 +39,6 @@ class Tokenizer:
         self.decode_dict = {value: letter for value, letter in enumerate(self.vocab)}
 
         self.vocab_size = token_dim
-
-        # try:
-        #     tokens = np.load(TOKENS_FILE)
-        #     print(f"tokens of shape {tokens.shape}")
-        # except:
-        #     self.tokenize(file_path, 64, dump_to_txt = dump_to_txt)
         
     def encode(self, token: str) -> int:
         """
@@ -65,8 +69,12 @@ class Tokenizer:
         :param vocab_size: Size of vocabulary to extract
         :type vocab_size: int
         """
+
+        if (not vocab_file.exists()): raise IncompletePipelineError("Vocabulary")
+        
         vocab = []
         i = 0
+
         with open(vocab_file, "r", encoding="utf-8") as file:
             for line in file:
                 if (i >= vocab_size): break
@@ -84,14 +92,17 @@ class Tokenizer:
         :param dump_to_txt: set to True to dump tokens to txt file also
         :return: the np array of all the tokens
         """
+        if not text_file.exists(): 
+            raise IncompletePipelineError("Cleaned messages")
+
         tokens_file = DATA_DIR / f"{text_file.stem}_data.npy"
         tokens_txt_file = DATA_DIR / f"{text_file.stem}_data.txt"
         
         if (not Path.exists(tokens_file)):
-            print("tokenizing from text file")
             tokens = []
 
             with open(text_file, "r", encoding="utf-8") as data_file:
+                    print("Tokenizing text file...")
                     for line in data_file:
                         for char in line:
                             if (char in self.encode_dict): 
@@ -99,9 +110,11 @@ class Tokenizer:
                                             
             tokens_arr = np.array(tokens, dtype=np.uint16)
             np.save(tokens_file, tokens_arr)
+            print(f"Tokenized file saved to {tokens_file}")
         else:
-            print("tokenizing from np array file")
+            print(f"Loading tokens from {tokens_file}")
             tokens_arr = np.load(tokens_file)
+            print("Tokens loaded")
 
         if dump_to_txt:            
             np.savetxt(tokens_txt_file, tokens_arr, fmt="%.1d")

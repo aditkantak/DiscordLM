@@ -25,13 +25,17 @@ if __name__ == "__main__":
     print(f"Initialized data of shape {data.shape}")
 
     dataset = TokenDataset(data, CONTEXT_LENGTH)
+    print("Loaded dataset")
 
     ttsplit = [TRAIN_TEST_SPLIT, 1-TRAIN_TEST_SPLIT]
     train_data, val_data = random_split(dataset, ttsplit)
+    print("Split dataset")
 
     loader = DataLoader(train_data, BATCH_SIZE, shuffle=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Training process will run on {device}")
+
     config = Config(VOCAB_SIZE, 
                     #BATCH_SIZE, 
                     D_MODEL, 
@@ -41,5 +45,7 @@ if __name__ == "__main__":
                     NUM_BLOCKS)
     
     model = GPT(config).to(device)
+    print(f"Model loaded to {device}")
+
     optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=MOMENTUM)
 

@@ -1,11 +1,10 @@
 import json
-import os
 import re
 import emoji
 from pathlib import Path
 
 BASE_DIR = Path(".")
-DIRECTORY_PATH = BASE_DIR / "raw_discord" / "Messages"
+MESSAGES_DIR = BASE_DIR / "raw_discord" / "Messages"
 DATA_DIR = BASE_DIR / "data"
 
 DATA_FILE = DATA_DIR / "clean_discord.txt"
@@ -31,9 +30,6 @@ def parse_discord(input_dir):
                     unique_strings.add(text)
                     out.write(text + "\n")
                     
-
-
-
 def clean_message(raw_text: str):
     url_regex = r'https?://\S+|www\.\S+' #to remove urls
     mention_regex = r'<@!?&?\d+>' #to remove discord mentions
@@ -64,32 +60,28 @@ def count_words():
                 else:
                     word_counts[token] = 1
     
-    with open(VOCAB_FILE, "a", encoding = "utf-8") as file:
+    with open(VOCAB_FILE, "w", encoding = "utf-8") as file:
         sorted_words = sorted(word_counts.keys(), key=(lambda key: word_counts[key]), reverse=True)
         for word in sorted_words:
             file.write(f"{word}: {word_counts[word]}\n")
         
-def create_server_index():
-    index_path = "./raw_discord/Messages/index.json"
+def _create_server_index():
+    index_path = MESSAGES_DIR / "index.json"
     with open(index_path, "r", encoding = "utf-8") as file:
         server_names = json.load(file)
 
     return server_names
 
 def create_logs():
-    server_names = create_server_index()
+    server_names = _create_server_index()
 
     def server_name(file_path):
         with open(file_path, "r", encoding = "utf-8") as file:
             data = json.load(file)
             return server_names[data["id"]]
 
-    for entry_name in os.listdir(DIRECTORY_PATH):
-        #full_path = os.path.join(DIRECTORY_PATH, entry_name)
-        full_path = DIRECTORY_PATH / entry_name
-        
-        if os.path.isdir(full_path):
-
+    for full_path in MESSAGES_DIR.iterdir():
+        if full_path.is_dir():
             message_file = full_path / "messages.json"
             server_info_file = full_path / "channel.json"
 
@@ -98,27 +90,33 @@ def create_logs():
                 server = server_name(server_info_file)
                 with open(LOGS_FILE, "a", encoding = "utf-8") as out:
                     for element in data: #of form {"ID": int, "Timestamp": datetime, "Contents": str, "Attachments": str}
-                        #messages_json_data.append({"message": element["Contents"], "Timestamp": element["Timestamp"]})
                         out.write(f"@{element["Timestamp"]} in {server} \"{element["Contents"]}\"\n")
 
 
 if __name__ == "__main__":
-    if os.path.exists(DATA_FILE):
-        os.remove(DATA_FILE)
+    if DATA_DIR.exists():
+        for file in DATA_DIR.iterdir():
+            file.unlink()
+        DATA_DIR.rmdir()
+    
+    DATA_DIR.mkdir()
+    open(DATA_FILE, "x")
+    open(VOCAB_FILE, "x")
+    print("Opened data directory")
 
-    if os.path.exists(VOCAB_FILE):
-        os.remove(VOCAB_FILE)
+    print(f"Gathering and cleaning message dataset...")
 
-    if os.path.exists(MISC_FILE):
-        os.remove(MISC_FILE)
-
-    server_names = create_server_index()
-
-    for entry_name in os.listdir(DIRECTORY_PATH):
-
-        full_path = DIRECTORY_PATH / entry_name
-
-        if os.path.isdir(full_path):
+    for full_path in MESSAGES_DIR.iterdir():
+        if full_path.is_dir():
             parse_discord(full_path)
 
+    print("Message data gathering complete")
+
+    print("Generating vocabulary file...")
+    
     count_words()
+    
+    print("Vocabulary file generation complete")
+
+    # Uncomment the below line to generate readable discord logs for all your messages!
+    # create_logs()

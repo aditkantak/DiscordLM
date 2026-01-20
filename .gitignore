@@ -1,7 +1,9 @@
 data/*.txt
 data/*.npy
 .venv/
-raw_discord/
+raw_discord/Messages
+raw_discord/Servers
 __pycache__/
 *.ipynb
 .python_version
+*.zip
