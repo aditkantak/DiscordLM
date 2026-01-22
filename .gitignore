@@ -7,3 +7,8 @@ __pycache__/
 *.ipynb
 .python_version
 *.zip
+weights/
+cloud/*.npy
+cloud/*.txt
+cloud/train.sh
+.DS_Store
