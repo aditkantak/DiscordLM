@@ -7,7 +7,8 @@ import numpy as np
 from dataclasses import dataclass
 from pathlib import Path
 import requests
-import subprocess
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 print(*(f"{file}\n" for file in Path(".").iterdir()))
@@ -264,7 +265,7 @@ class GPT(nn.Module):
         seq = start_seq if start_seq is not None else [0]
 
         for _ in range(max_tokens):
-            input_tensor = torch.tensor(seq[-self._context_len:], device = device).unsqueeze(0)
+            input_tensor = torch.tensor(seq[-self._context_len:]).unsqueeze(0).to(device)
 
             logits, _ = self(input_tensor)
             probs = torch.softmax(logits, -1)[0, -1] #get probabilities for last token
@@ -281,16 +282,7 @@ D_MODEL = 256
 CONTEXT_LENGTH = 128
 NUM_HEADS = 8
 D_KEY = 32
-NUM_BLOCKS = 4
-
-BATCH_SIZE = 256
-TRAIN_TEST_SPLIT = 0.9
-LR = 3e-4
-MOMENTUM = 0.9
-EPOCHS = 5
-WEIGHT_DECAY = 0.1
-
-WEIGHTS_DIR = Path(".") / "weights"
+NUM_BLOCKS = 5
 
 CONFIG = Config(VOCAB_SIZE,
                 D_MODEL,
@@ -299,6 +291,27 @@ CONFIG = Config(VOCAB_SIZE,
                 D_KEY,
                 NUM_BLOCKS)
 
+BATCH_SIZE = 256
+TRAIN_TEST_SPLIT = 0.9
+LR = 3e-4
+MOMENTUM = 0.9
+EPOCHS = 10
+WEIGHT_DECAY = 0.1
+LOG_INTERVAL = 1000
+
+WEIGHTS_DIR = Path(".") / "weights"
+MODEL_PATH = WEIGHTS_DIR / "best_model.pth"
+LOGS_DIR = Path(".") / "logs"
+
+if not WEIGHTS_DIR.exists(): WEIGHTS_DIR.mkdir()
+if not LOGS_DIR.exists(): LOGS_DIR.mkdir()
+
+start_dt = datetime.now(ZoneInfo("America/Los_Angeles"))
+filename = start_dt.strftime("%Y-%m-%d_%H-%M-%S")
+LOGS_FILE = LOGS_DIR / f"{filename}.txt"
+with open(LOGS_FILE, "w", encoding="utf-8") as file:
+    start_timestamp = start_dt.strftime("%m/%d/%Y %I:%M:%S %p")
+    file.write(f"Training started at {start_timestamp}.\n")
 
 vocab_file = DATA_DIR / "vocab.txt"
 text_file = DATA_DIR / "clean_discord.txt"
@@ -325,12 +338,11 @@ print(f"Training process will run on {device}")
 model = GPT(CONFIG).to(device)
 print(f"Model loaded to {device}")
 
+torch.save(model.state_dict(), MODEL_PATH)
+print(f"Initialized model stored at {MODEL_PATH}")
+
 optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
 print("Training initialization complete")
-
-if not WEIGHTS_DIR.exists(): WEIGHTS_DIR.mkdir()
-MODEL_PATH = WEIGHTS_DIR / "best_model.pth"
-
 
 best_val_loss = float("inf")
     
@@ -338,7 +350,6 @@ for epoch in range(EPOCHS):
     #run one epoch
     epoch_running_loss = 0
     lastn_running_loss = 0
-    n = 1000
 
     model.train()
 
@@ -357,8 +368,12 @@ for epoch in range(EPOCHS):
         epoch_running_loss += loss.item()
         lastn_running_loss += loss.item()
 
-        if (batch_num % n == 0):
-            print(f"Batch {batch_num}/{len(train_loader)} ({(batch_num/len(train_loader)):.2f}% epoch completed): Last {n} avg loss: {(lastn_running_loss / n) :.5f} overall avg loss: {(epoch_running_loss / (batch_num + 1)):.5f}")
+        if (batch_num % LOG_INTERVAL == 0 and batch_num > 0):
+            log = f"Batch {batch_num}/{len(train_loader)} ({(batch_num/len(train_loader)):.0%} epoch completed): Last {LOG_INTERVAL} avg loss: {(lastn_running_loss / LOG_INTERVAL) :.5f} overall avg loss: {(epoch_running_loss / (batch_num + 1)):.5f}\n"
+            
+            print(log)
+            with open(LOGS_FILE, "a", encoding="utf-8") as file: file.write(log)
+            
             lastn_running_loss = 0
 
     #val loss calculation
@@ -390,21 +405,42 @@ for epoch in range(EPOCHS):
     print(f"Best val loss:     {best_val_loss:.5f}")
     print("\n-------------------------------------------------------------------------------------------------")
 
-print(f"Training complete. Best val_loss achieved: {best_val_loss:.5f}")
+    # epoch_end_log = f"-------------------------------------------------------------------------------------------------\n\nEpoch {epoch + 1} Complete\nAvg training loss: {avg_t_loss:.5f}\nAvg val loss:      {avg_v_loss:.5f}\nBest val loss:     {best_val_loss:.5f}\n\n-------------------------------------------------------------------------------------------------\n"
+    # print(epoch_end_log)
+    with open(LOGS_FILE, "a", encoding="utf-8") as file: 
+        file.write("-------------------------------------------------------------------------------------------------\n\n")
+        file.write(f"Epoch {epoch + 1} Complete\n")
+        file.write(f"Avg training loss: {avg_t_loss:.5f}\n")
+        file.write(f"Avg val loss:      {avg_v_loss:.5f}\n")
+        file.write(f"Best val loss:     {best_val_loss:.5f}\n")
+        file.write("\n-------------------------------------------------------------------------------------------------\n")
+
+
+
+
+end_log = f"Training complete. Best val_loss achieved: {best_val_loss:.5f}\n\n"
+print(end_log)
+
+end_dt = datetime.now(ZoneInfo("America/Los_Angeles"))
+with open(LOGS_FILE, "a", encoding="utf-8") as file:
+    end_timestamp = end_dt.strftime("%m/%d/%Y %I:%M:%S %p")
+    file.write(end_log)
+    file.write(f"Training ended at {end_timestamp}.\n")
+    file.write(f"Training elapsed time (hh:mm:ss): {str(end_dt-start_dt)}\n\n")
+
 
 #generate some text 
-def generate_text(gpt, max_tokens, start_seq=""):
-    tk = Tokenizer(vocab_file, CONFIG.vocab_size)
+def generate_text(gpt, max_tokens, device, tokenizer, start_seq=""):
     output = start_seq
 
     if start_seq: 
-        seq = [tk.encode(c) for c in start_seq]
+        seq = [tokenizer.encode(c) for c in start_seq]
         print(start_seq, end="")
     else: 
         seq = [0]
 
     for token in gpt.generate(max_tokens, device, seq):
-        next_token = tk.decode(token)
+        next_token = tokenizer.decode(token)
         print(next_token, end="")
         output += next_token
 
@@ -414,26 +450,21 @@ def generate_text(gpt, max_tokens, start_seq=""):
 
 model = GPT(CONFIG)
 model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
-
+model.eval()
 model.to(device)
+
 print(f"Generation starting on {device}.")
 print()
 
-output = generate_text(model, 200)
+output = generate_text(model, 1000, device, tk)
 
-#uploading model weights
-result = subprocess.run(
-    ["curl", "--upload-file", "./weights/best_model.pth", "https://transfer.sh/best_model.pth"],
-    capture_output=True, text=True
-)
-model_file_link = result.stdout
-print(f"Model uploaded to \n{model_file_link}\n")
+#save generated text to log file
+with open(LOGS_FILE, "a", encoding="utf-8") as file: file.write("\n\n1000 generated tokens:\n" + output)
 
-#send it to phone
+#send generated text to phone
 url = "https://ntfy.sh/discordlm_training"
 try:
-    requests.post(url, data=f"Model located at: {model_file_link} Generated output: {output}".encode(encoding="utf-8"))
+    requests.post(url, data=f"Best val loss achieved: {best_val_loss} Generated output: {output}".encode(encoding="utf-8"))
 except:
     print("push notif failed")
-
 

@@ -52,7 +52,7 @@ if __name__ == "__main__":
     model = GPT(CONFIG)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    #device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
     model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 
@@ -62,16 +62,3 @@ if __name__ == "__main__":
     print()
 
     output = generate_text(model, 1000)
-
-    url = "https://ntfy.sh/discordlm_training"
-    try:
-        requests.post(url, data=output.encode(encoding="utf-8"))
-        #print(x.text)
-    except Exception as e:
-        print("push notif failed due to", e)
-
-    # result = subprocess.run(
-    # ["curl", "--upload-file", "./weights/best_model.pth", "https://transfer.sh/best_model.pth"],
-    # capture_output=True, text=True
-    # )
-    # print(result)
