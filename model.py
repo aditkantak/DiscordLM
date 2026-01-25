@@ -124,13 +124,14 @@ class GPT(nn.Module):
         return logits, loss
     
     @torch.no_grad()
-    def generate(self, max_tokens: int, start_seq = None, device = "cpu"):
+    def generate(self, max_tokens: int, temperature: int, start_seq = None, device = "cpu"):
         seq = start_seq if start_seq is not None else [0]
 
         for _ in range(max_tokens):
-            input_tensor = torch.tensor(seq[-self._context_len:], device = device).unsqueeze(0)
+            input_tensor = torch.tensor(seq[-self._context_len:]).unsqueeze(0).to(device)
             
             logits, _ = self(input_tensor)
+            logits = logits / temperature
             probs = torch.softmax(logits, -1)[0, -1] #get probabilities for last token
 
             next_token = torch.multinomial(probs, 1).item() #sample from probs to get next token

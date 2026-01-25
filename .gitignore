@@ -12,3 +12,4 @@ cloud/*.npy
 cloud/*.txt
 cloud/train.sh
 .DS_Store
+logs/
