@@ -16,7 +16,6 @@ training a little transformer language model on discord chat logs. Transformer i
 #### Best achieved val loss: 1.083104237977642
 - Model is finally coherent(ish)!!!! scroll down for example output.
 - Surprisingly doesn't generate too much personal information, I'm going to test it more and if it's not bad, I might make a little playground for the website
-- Trained for 10 epochs, but logs are still stuck on stupid Arizona server storage, I'll have to wait until night to get it out to see the loss curve. (need to switch gpu providers or figure out some better pipeline)
 
 ### Training data not included for privacy. Information on how to get your own data is in `guide.md`
 
