@@ -15,8 +15,8 @@ D_KEY = 32
 NUM_BLOCKS = 5
 
 TEMPERATURE = 0.7
-
-NUM_TOKENS = 1000
+NUM_TOKENS = 200
+START_SEQ = ""
 
 CONFIG = Config(VOCAB_SIZE,
                 D_MODEL,
@@ -54,12 +54,12 @@ if __name__ == "__main__":
     model.to(device)
     model.eval()
     print(f"{sum(m.numel() for m in model.parameters() if m.requires_grad)} trainable parameters")
-    print(f"starting generation on {device}\n")
+    print(f"starting generation on {device} with temperature={TEMPERATURE}\n")
 
     start = time.perf_counter()
 
-    output = generate_text(model, NUM_TOKENS, TEMPERATURE, device, tk)
+    output = generate_text(model, NUM_TOKENS, TEMPERATURE, device, tk, START_SEQ)
 
     end = time.perf_counter()
-    
+
     print(f"\nTime taken for {NUM_TOKENS} tokens on {device}: {end-start:.5f}")
